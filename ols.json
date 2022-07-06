@@ -1,0 +1,20 @@
+{
+    "collections": [
+        {
+            "name": "core",
+            "path": "C:\\Program Files\\odin-windows-amd64-dev-2022-06\\core"
+        },
+        {
+            "name": "vendor",
+            "path": "C:\\Program Files\\odin-windows-amd64-dev-2022-06\\vendor"
+        }
+    ],
+    "enable_document_symbols": true,
+    "enable_semantic_tokens": false,
+    "enable_hover": true,
+    "enable_snippets": true,
+    "formatter": {
+        "tabs": true,
+        "characters": 100
+    }
+}
