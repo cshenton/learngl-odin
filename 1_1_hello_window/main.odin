@@ -1,6 +1,5 @@
 package main
 
-import "core:fmt"
 import gl "vendor:OpenGl"
 import "vendor:glfw"
 

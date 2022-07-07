@@ -1,6 +1,5 @@
 package main
 
-import "core:fmt"
 import glm "core:math/linalg/glsl"
 
 import gl "vendor:OpenGl"
