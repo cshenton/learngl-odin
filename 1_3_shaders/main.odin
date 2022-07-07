@@ -4,23 +4,6 @@ import "core:fmt"
 import gl "vendor:OpenGl"
 import "vendor:glfw"
 
-VERT_SRC :: `
-#version 330 core
-layout (location = 0) in vec3 aPos;
-void main()
-{
-   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-}`
-
-FRAG_SRC :: `
-#version 330 core
-out vec4 FragColor;
-void main()
-{
-   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-};
-`
-
 main :: proc() {
 	glfw.Init()
 	defer glfw.Terminate()
@@ -42,14 +25,20 @@ main :: proc() {
 	gl.load_up_to(3, 3, glfw.gl_set_proc_address)
 
 	// Compile shaders
-	program, ok := gl.load_shaders_source(VERT_SRC, FRAG_SRC)
+	vert_src := string(#load("./shader.vert"))
+	frag_src := string(#load("./shader.frag"))
+	program, ok := gl.load_shaders_source(vert_src, frag_src)
 	if !ok {
 		panic("Shader compilation failed")
 	}
 	defer gl.DeleteProgram(program)
 
 	// Create vertex buffers
-	vertices := [12]f32{0.5, 0.5, 0.0, 0.5, -0.5, 0.0, -0.5, -0.5, 0.0, -0.5, 0.5, 0.0}
+	vertices := [24]f32{
+		0.5, 0.5, 0.0, 1.0, 1.0, 1.0,
+		0.5, -0.5, 0.0, 1.0, 0.0, 1.0,
+		-0.5, -0.5, 0.0, 0.0, 0.0, 1.0,
+		-0.5, 0.5, 0.0, 0.0, 1.0, 1.0}
 	indices := [6]i32{0, 1, 3, 1, 2, 3}
 
 	vbo, vao, ebo: u32
@@ -67,8 +56,10 @@ main :: proc() {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, size_of(indices), &indices[0], gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of([3]f32), 0)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, size_of([6]f32), 0)
 	gl.EnableVertexAttribArray(0)
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, size_of([6]f32), size_of([3]f32))
+	gl.EnableVertexAttribArray(1)
 
 	// Render
 	for !glfw.WindowShouldClose(window) {
