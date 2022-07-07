@@ -26,6 +26,9 @@ main :: proc() {
 	glfw.SetFramebufferSizeCallback(window, framebuffer_size_callback)
 	gl.load_up_to(3, 3, glfw.gl_set_proc_address)
 
+	// Features
+	gl.Enable(gl.DEPTH_TEST)
+
 	// Compile shaders
 	vert_src := string(#load("./shader.vert"))
 	frag_src := string(#load("./shader.frag"))
@@ -36,11 +39,43 @@ main :: proc() {
 	defer gl.DeleteProgram(program)
 
 	// Create vertex and index buffers
-	vertices := [4][5]f32 {
-		{0.5, 0.5, 0.0, 1.0, 1.0}, // top right
-		{0.5, -0.5, 0.0, 1.0, 0.0}, // bottom right
-		{-0.5, -0.5, 0.0, 0.0, 0.0}, // bottom left
-		{-0.5, 0.5, 0.0, 0.0, 1.0}, // top left 
+	vertices := [36][5]f32{
+		{-0.5, -0.5, -0.5, 0.0, 0.0},
+		{0.5, -0.5, -0.5, 1.0, 0.0},
+		{0.5, 0.5, -0.5, 1.0, 1.0},
+		{0.5, 0.5, -0.5, 1.0, 1.0},
+		{-0.5, 0.5, -0.5, 0.0, 1.0},
+		{-0.5, -0.5, -0.5, 0.0, 0.0},
+		{-0.5, -0.5, 0.5, 0.0, 0.0},
+		{0.5, -0.5, 0.5, 1.0, 0.0},
+		{0.5, 0.5, 0.5, 1.0, 1.0},
+		{0.5, 0.5, 0.5, 1.0, 1.0},
+		{-0.5, 0.5, 0.5, 0.0, 1.0},
+		{-0.5, -0.5, 0.5, 0.0, 0.0},
+		{-0.5, 0.5, 0.5, 1.0, 0.0},
+		{-0.5, 0.5, -0.5, 1.0, 1.0},
+		{-0.5, -0.5, -0.5, 0.0, 1.0},
+		{-0.5, -0.5, -0.5, 0.0, 1.0},
+		{-0.5, -0.5, 0.5, 0.0, 0.0},
+		{-0.5, 0.5, 0.5, 1.0, 0.0},
+		{0.5, 0.5, 0.5, 1.0, 0.0},
+		{0.5, 0.5, -0.5, 1.0, 1.0},
+		{0.5, -0.5, -0.5, 0.0, 1.0},
+		{0.5, -0.5, -0.5, 0.0, 1.0},
+		{0.5, -0.5, 0.5, 0.0, 0.0},
+		{0.5, 0.5, 0.5, 1.0, 0.0},
+		{-0.5, -0.5, -0.5, 0.0, 1.0},
+		{0.5, -0.5, -0.5, 1.0, 1.0},
+		{0.5, -0.5, 0.5, 1.0, 0.0},
+		{0.5, -0.5, 0.5, 1.0, 0.0},
+		{-0.5, -0.5, 0.5, 0.0, 0.0},
+		{-0.5, -0.5, -0.5, 0.0, 1.0},
+		{-0.5, 0.5, -0.5, 0.0, 1.0},
+		{0.5, 0.5, -0.5, 1.0, 1.0},
+		{0.5, 0.5, 0.5, 1.0, 0.0},
+		{0.5, 0.5, 0.5, 1.0, 0.0},
+		{-0.5, 0.5, 0.5, 0.0, 0.0},
+		{-0.5, 0.5, -0.5, 0.0, 1.0},
 	}
 	indices := [6]i32{0, 1, 3, 1, 2, 3}
 
@@ -103,6 +138,20 @@ main :: proc() {
 	gl.Uniform1i(gl.GetUniformLocation(program, "texture1"), 0)
 	gl.Uniform1i(gl.GetUniformLocation(program, "texture2"), 1)
 
+	// Declare some positions
+	positions := [10]glm.vec3{
+		glm.vec3{0.0, 0.0, 0.0},
+		glm.vec3{2.0, 5.0, -15.0},
+		glm.vec3{-1.5, -2.2, -2.5},
+		glm.vec3{-3.8, -2.0, -12.3},
+		glm.vec3{2.4, -0.4, -3.5},
+		glm.vec3{-1.7, 3.0, -7.5},
+		glm.vec3{1.3, -2.0, -2.5},
+		glm.vec3{1.5, 2.0, -2.5},
+		glm.vec3{1.5, 0.2, -1.5},
+		glm.vec3{-1.3, 1.0, -1.5},
+	}
+
 	// Render
 	for !glfw.WindowShouldClose(window) {
 		if glfw.GetKey(window, glfw.KEY_ESCAPE) == glfw.PRESS {
@@ -111,7 +160,7 @@ main :: proc() {
 
 		// Clear the frame buffer
 		gl.ClearColor(0.2, 0.3, 0.3, 1.0)
-		gl.Clear(gl.COLOR_BUFFER_BIT)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		// Bind the textures
 		gl.ActiveTexture(gl.TEXTURE0)
@@ -121,16 +170,21 @@ main :: proc() {
 
 		// Compute and apply uniforms
 		gl.UseProgram(program)
-		model := glm.mat4Rotate(glm.vec3{1.0, 0.0, 0.0}, glm.radians(f32(-55.0)))
+		time := f32(glfw.GetTime())
 		view := glm.mat4Translate(glm.vec3{0.0, 0.0, -3.0})
-		projection := glm.mat4Perspective(glm.radians(f32(-45.0)), 8.0 / 6.0, 0.1, 100.0)
-		transform := projection * view * model
+		projection := glm.mat4Perspective(glm.radians(f32(45.0)), 8.0 / 6.0, 0.1, 100.0)
 		transform_loc := gl.GetUniformLocation(program, "transform")
-		gl.UniformMatrix4fv(transform_loc, 1, false, &transform[0][0])
 
 		// Draw the geometry
 		gl.BindVertexArray(vao)
-		gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
+		for i in 0 ..< 10 {
+			angle := 20.0 * f32(i)
+			translate := glm.mat4Translate(positions[i])
+			rotate := glm.mat4Rotate(glm.vec3{1.0, 0.3, 0.5}, angle + time * glm.radians(f32(20.0)))
+			transform := projection * view * translate * rotate
+			gl.UniformMatrix4fv(transform_loc, 1, false, &transform[0][0])
+			gl.DrawArrays(gl.TRIANGLES, 0, 36)
+		}
 
 		glfw.SwapBuffers(window)
 		glfw.PollEvents()
